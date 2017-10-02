@@ -1,61 +1,39 @@
 /* eslint-disable */
 
 var LinkedIn = (function($) {
-  var searchUrl = '/admin/officials/politician/';
+  var searchUrl = '/api/v1/politicians/';
   var directoryUrl = '/directory/';
 
   function startLookup(editor, name) {
     this.editor = editor;
     this.name = name;
 
-    this._nameNotFound = function(name) {
-      alert('Name not found: ' + name);
+    this._nameNotFound = function() {
+      alert('Name not found: ' + this.name);
     };
 
     this._insertLink = function(html) {
       this.editor.insertHtml(html);
     };
 
-    this._linkify = function(text, href) {
-      return '<a href="http://www.texastribune.org' + href + '">' + text + '</a>';
+    this._linkify = function(href) {
+      return '<a href="' + href + '">' + this.name + '</a>';
     };
 
-    this._getSlugFor = function(href) {
-      var self = this;
-
-      $.get(href, function(html) {
-        var resultHtml = $('<div>' + html + '</div>');
-        var slug = resultHtml.find('#id_slug').val();
-
-        self.editor.focus();
-
-        var link = self._linkify(self.name, directoryUrl + slug + '/');
-        var selectedText = self.editor
-          .getSelection()
-          .getSelectedText();
-
-        self._insertLink(link);
-      }, 'html');
-    };
-
-    this._parseNameSearch = function(html) {
-      var result_html = $('<div>' + html + '</div>');
-      var results = result_html.find('#result_list > tbody a');
-
-      if (results.length) {
-        this._getSlugFor(results[0].getAttribute('href'));
+    this._parseNameSearch = function(json) {
+      if (json.count === 0 || json.count > 1) {
+        this._nameNotFound();
       } else {
-        this._nameNotFound(this.name);
+        var link = this._linkify(json.results[0].url);
+        this._insertLink(link);
       }
     };
 
     this._findName = function() {
-      $.get(searchUrl, { q: this.name }, this._parseNameSearch.bind(this), 'html');
+      $.getJSON(searchUrl, { search: this.name }, this._parseNameSearch.bind(this));
     };
 
     this._findName();
-
-    return this;
   }
 
   return {
