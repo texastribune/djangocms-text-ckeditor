@@ -12,6 +12,10 @@ var LinkedIn = (function($) {
       alert('Name not found: ' + this.name);
     };
 
+    this._tooManyNames = function() {
+      alert('Too many results for: ' + this.name);
+    };
+
     this._insertLink = function(html) {
       this.editor.insertHtml(html);
     };
@@ -21,8 +25,10 @@ var LinkedIn = (function($) {
     };
 
     this._parseNameSearch = function(json) {
-      if (json.count === 0 || json.count > 1) {
+      if (json.count === 0) {
         this._nameNotFound();
+      } else if (json.count > 1) {
+        this._tooManyNames();
       } else {
         var link = this._linkify(json.results[0].url);
         this._insertLink(link);
